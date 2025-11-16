@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Products | IronLinks</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Open+Sans&display=swap" rel="stylesheet">
+
+  <!-- Google Model Viewer -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    model-viewer {
+      width: 100%;
+      height: 500px;
+      background-color: #eaeaea;
+      border-radius: 15px;
+    }
+
+    .ar-notice {
+      font-size: 13px;
+      color: #666;
+      margin-top: 10px;
+    }
+
+    .product-icons button {
+      background-color: #444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .product-icons button:hover {
+      background-color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <h1>Iron <span>works</span></h1>
+    <nav>
+      <a href="index.html">about us</a> |
+      <a href="products.html">products</a> |
+      <a href="book.html">book now</a> |
+      <a href="#contact">contact</a>
+    </nav>
+  </header>
+
+  <!-- Product Section -->
+  <section class="product-section">
+    <h2>Our Products</h2>
+    <div class="product-container">
+
+      <!-- Product Image and 3D/AR View -->
+      <div class="product-image">
+        <!-- Static image (default view) -->
+        <img src="hompage_photos/Gate_2.jpg" alt="Iron Gate" id="mainImage">
+
+        <!-- 3D & AR viewer -->
+        <model-viewer
+          id="gate3D"
+          src="3D_Demo/wall.glb"
+          ios-src="3D_Demo/wall.usdz"
+          alt="Iron Gate 3D Model"
+          auto-rotate
+          camera-controls
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+          style="display: none;"
+        >
+        </model-viewer>
+
+        <div class="product-icons">
+          <button id="view3d">3D View</button>
+        </div>
+
+        <p class="ar-notice">📱 Tap “View in AR” (on mobile) to place it in your space!</p>
+      </div>
+
+      <!-- Product Details -->
+      <div class="product-details">
+        <h3>Modular Arc Gate Display (MAGD)</h3>
+        <ul>
+          <li>Wrought Iron (Standard)</li>
+          <li>Powder-Coated (Matte Black)</li>
+          <li>Fully Welded Joints</li>
+        </ul>
+        <p>⭐ 4.1 (72 reviews)</p>
+
+        <div class="quote-box">
+          <h4>Start Your Custom Project</h4>
+          <p>Schedule a free consultation to discuss your custom gate, grill, or railing design.</p>
+          <button class="quote-btn">Request a Quote</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const view3dBtn = document.getElementById("view3d");
+    const model3D = document.getElementById("gate3D");
+    const mainImage = document.getElementById("mainImage");
+
+    view3dBtn.addEventListener("click", () => {
+      const isHidden = model3D.style.display === "none" || model3D.style.display === "";
+      model3D.style.display = isHidden ? "block" : "none";
+      mainImage.style.display = isHidden ? "none" : "block";
+      view3dBtn.textContent = isHidden ? "Image View" : "3D View";
+    });
+  </script>
+
+</body>
+</html>

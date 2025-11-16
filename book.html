@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Consultation | IronLinks</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>Iron <span>works</span></h1>
+    <nav>
+      <a href="index.html">about us</a> |
+      <a href="products.html">products</a> |
+      <a href="book.html">book now</a> |
+      <a href="#contact">contact</a>
+    </nav>
+</header>
+
+<section class="book-section">
+    <h2>Book a Consultation</h2>
+    <form action="/book" method="POST" class="book-form">
+        <input type="text" name="name" placeholder="Full Name" required><br>
+        <input type="email" name="email" placeholder="Email" required><br>
+        <input type="tel" name="phone" placeholder="Phone Number" required><br>
+        <input type="date" name="date" required><br>
+        <textarea name="request" placeholder="Additional Details"></textarea>
+        <button type="submit">Submit Booking</button>
+    </form>
+</section>
+
+</body>
+</html>
