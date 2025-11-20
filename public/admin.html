@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | IronLinks</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1, h2 { color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background-color: #f5f5f5; }
+    tr:nth-child(even) { background-color: #fafafa; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Iron <span>works</span> Admin Panel</h1>
+  </header>
+
+  <section class="admin-section">
+    <h2>Bookings</h2>
+    <table id="bookings-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Request</th>
+          <th>Created At</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <script>
+    async function loadBookings() {
+      const tbody = document.querySelector('#bookings-table tbody');
+      tbody.innerHTML = '';
+
+      try {
+        const res = await fetch('/bookings');
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+
+        const data = await res.json();
+        data.forEach(b => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${b.id}</td>
+            <td>${b.name}</td>
+            <td>${b.email}</td>
+            <td>${b.phone}</td>
+            <td>${b.date}</td>
+            <td>${b.time || ''}</td>
+            <td>${b.request || ''}</td>
+            <td>${b.created_at}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        tbody.innerHTML = `<tr><td colspan="8">Failed to load bookings</td></tr>`;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadBookings);
+  </script>
+</body>
+</html>
