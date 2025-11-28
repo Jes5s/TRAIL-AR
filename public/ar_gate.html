@@ -14,7 +14,9 @@
     window.location.href = "/3D_Demo/wall.usdz";
   } else {
     // Android Scene Viewer
-    window.location.href = "intent://arvr.google.com/scene-viewer/1.0?file=https://trail-ar.vercel.app/3D_Demo/Grill_white.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;end";
+    const file = encodeURIComponent("https://trail-ar.vercel.app/3D_Demo/Grill_white.glb");
+    const sceneViewerUrl = `https://arvr.google.com/scene-viewer/1.0?file=${file}&mode=ar_preferred`;
+    window.location.href = sceneViewerUrl;
   }
 </script>
 </body>
