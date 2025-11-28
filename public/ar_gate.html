@@ -1,43 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Launching AR...</title>
-
-  <!-- Model Viewer script for Android AR -->
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.0.1/model-viewer.min.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #000;
-    }
-    model-viewer {
-      width: 100vw;
-      height: 100vh;
-    }
-  </style>
-</head>
-<body>
-
 <script>
-  // If iPhone/iPad → open USDZ instantly
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    window.location.href = "/3D_Demo/wall.usdz";
-  }
-</script>
-
-<!-- Android model viewer (only loads if NOT iOS) -->
-<model-viewer
-  src="/3D_Demo/Grill_white"
-  ar
-  ar-modes="scene-viewer webxr quick-look"
-  camera-controls
-  auto-rotate
-  style="display: block;">
-</model-viewer>
-
-</body>
-</html>
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = "/3D_Demo/wall.usdz";
+    } else {
+        window.location.href = "/3D_Demo/Grill_white.glb";
+    }
+    </script>
+    
