@@ -19,57 +19,61 @@
 
 <section class="book-section">
     <h2>Book a Consultation</h2>
-    <form id="bookingForm" class="book-form">
-        <input type="text" name="name" placeholder="Full Name" required>
+    <form id="bookingForm" class="book-form" method="POST" action="/book">
+        <!-- Name: letters only -->
+        <input type="text" name="name" placeholder="Full Name" pattern="[A-Za-z\s]+" title="Letters only" required>
+
+        <!-- Email: native validation -->
         <input type="email" name="email" placeholder="Email" required>
-        <input type="tel" name="phone" placeholder="Phone Number" required>
-        <input type="date" name="date" required>
+
+        <!-- Phone: 11 digits starting with 09 -->
+        <input type="tel" name="phone" placeholder="Phone Number (09XXXXXXXXX)" pattern="09[0-9]{9}" title="11 digits starting with 09" required>
+
+        <!-- Date: no past dates -->
+        <input type="date" name="date" id="dateInput" required>
+
         <input type="time" name="time" required>
         <textarea name="request" placeholder="Additional Details"></textarea>
         <button type="submit">Submit Booking</button>
     </form>
+    <p id="statusMessage" style="color:red;"></p>
 </section>
 
-<!-- Popup Modal -->
-<div id="bookingModal">
-  <div id="bookingModalContent">
-    <p>Booking Successful!</p>
-    <button id="closeModal">Close</button>
-  </div>
-</div>
-
 <script>
-const form = document.getElementById('bookingForm');
-const modal = document.getElementById('bookingModal');
-const closeBtn = document.getElementById('closeModal');
+  // Prevent past dates
+  const dateInput = document.getElementById('dateInput');
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.setAttribute('min', today);
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const formData = new FormData(form);
-  const data = Object.fromEntries(formData.entries());
+  // Handle form submission
+  const form = document.getElementById('bookingForm');
+  const statusMessage = document.getElementById('statusMessage');
 
-  try {
-    const res = await fetch('/book', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    const text = await res.text();
+    statusMessage.textContent = '';
 
-    if (!res.ok) throw new Error(text);
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
 
-    modal.style.display = 'flex'; // Show popup
-    form.reset();
-  } catch (err) {
-    alert(err.message);
-    console.error(err);
-  }
-});
+    try {
+      const res = await fetch('/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
 
-// Close modal
-closeBtn.addEventListener('click', () => modal.style.display = 'none');
-window.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+      const text = await res.text();
+
+      if (!res.ok) throw new Error(text);
+
+      alert("Booking successful!");
+      form.reset();
+    } catch (err) {
+      statusMessage.textContent = err.message;
+    }
+  });
 </script>
 
 <footer id="contact">
@@ -78,12 +82,10 @@ window.addEventListener('click', e => { if (e.target === modal) modal.style.disp
     <p>📍 Address</p>
     <p>📱 Phone Number</p>
     <p>📧 email</p>
-
     <div class="social-links">
       <a href="#">Facebook</a> |
       <a href="#">Messenger</a>
     </div>
-
     <p class="footer-note">© 2025 IronLinks. All Rights Reserved.</p>
   </div>
 </footer>

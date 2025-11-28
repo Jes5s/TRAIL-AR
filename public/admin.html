@@ -1,75 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel | IronLinks</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1, h2 { color: #333; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    th { background-color: #f5f5f5; }
-    tr:nth-child(even) { background-color: #fafafa; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin | IronLinks</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Open+Sans&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <h1>Iron <span>works</span> Admin Panel</h1>
-  </header>
 
-  <section class="admin-section">
-    <h2>Bookings</h2>
-    <table id="bookings-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone</th>
-          <th>Date</th>
-          <th>Time</th>
-          <th>Request</th>
-          <th>Created At</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
+<header>
+    <h1>Iron <span>works</span> Admin</h1>
+    <nav>
+      <a href="index.html">Home</a> |
+      <a href="admin_booking.html">Bookings</a> |
+      <a href="admin.html">Gallery</a>
+    </nav>
+</header>
 
-  <script>
-    async function loadBookings() {
-      const tbody = document.querySelector('#bookings-table tbody');
-      tbody.innerHTML = '';
+<section class="gallery" id="gallery-section">
+    <h2>Gallery Management</h2>
+    <form id="uploadForm" class="book-form" enctype="multipart/form-data">
+        <input type="text" name="category" placeholder="Category (e.g., Gate, Railings)" required>
+        <input type="file" name="image" accept="image/*" required>
+        <button type="submit">Add Image</button>
+    </form>
+    <p id="statusMessage" style="color:green;"></p>
+    <div id="galleryContainer">
+        <h3>Existing Gallery</h3>
+        <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+</section>
 
-      try {
+<script>
+// -----------------------------
+// Load Bookings from Supabase
+// -----------------------------
+async function loadBookings() {
+    try {
         const res = await fetch('/bookings');
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-
         const data = await res.json();
-        data.forEach(b => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${b.id}</td>
-            <td>${b.name}</td>
-            <td>${b.email}</td>
-            <td>${b.phone}</td>
-            <td>${b.date}</td>
-            <td>${b.time || ''}</td>
-            <td>${b.request || ''}</td>
-            <td>${b.created_at}</td>
-          `;
-          tbody.appendChild(tr);
+        const tbody = document.querySelector("#bookingsTable tbody");
+        tbody.innerHTML = "";
+        data.forEach(booking => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${booking.name}</td>
+                <td>${booking.email}</td>
+                <td>${booking.phone}</td>
+                <td>${booking.date}</td>
+                <td>${booking.time}</td>
+                <td>${booking.request || ''}</td>
+            `;
+            tbody.appendChild(tr);
         });
-
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-        tbody.innerHTML = `<tr><td colspan="8">Failed to load bookings</td></tr>`;
-      }
+    } catch (err) {
+        console.error(err);
     }
+}
 
-    window.addEventListener('DOMContentLoaded', loadBookings);
-  </script>
+// -----------------------------
+// Gallery Upload
+// -----------------------------
+const uploadForm = document.getElementById('uploadForm');
+const statusMessage = document.getElementById('statusMessage');
+const galleryGrid = document.getElementById('galleryGrid');
+
+async function loadGallery() {
+    try {
+        const res = await fetch('/gallery');
+        const data = await res.json();
+        galleryGrid.innerHTML = '';
+        data.forEach(item => {
+            const img = document.createElement('img');
+            img.src = item.url;
+            img.alt = item.category;
+            galleryGrid.appendChild(img);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(uploadForm);
+    try {
+        const res = await fetch('/gallery', { method: 'POST', body: formData });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text);
+        statusMessage.textContent = 'Image added successfully!';
+        uploadForm.reset();
+        loadGallery();
+    } catch (err) {
+        statusMessage.style.color = 'red';
+        statusMessage.textContent = err.message;
+    }
+});
+
+// -----------------------------
+// Initialize
+// -----------------------------
+loadBookings();
+loadGallery();
+</script>
+
 </body>
 </html>
