@@ -1,9 +1,14 @@
 /* ===============================
    GLOBAL
 ================================ */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: 'Open Sans', sans-serif;
-    margin: 0;
     background-color: #f7f7f7;
     color: #333;
 }
@@ -125,7 +130,7 @@ header nav a:hover {
 
 .gallery h2 {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(24px, 4vw, 30px);
+    font-size: 30px;
     margin-bottom: 30px;
 }
 
@@ -136,15 +141,15 @@ header nav a:hover {
 }
 
 .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 20px;
-    justify-items: center;
 }
 
 .gallery-grid img {
-    width: 100%;
-    max-width: 280px;
+    width: 280px;
+    height: auto;
     border-radius: 5px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     transition: transform 0.3s ease;
@@ -263,7 +268,8 @@ footer {
 .product-container {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: center; /* center horizontally */
+    align-items: flex-start;
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 3px 8px rgba(0,0,0,0.1);
@@ -271,19 +277,18 @@ footer {
     margin: auto;
     overflow: hidden;
     padding: 20px;
+    gap: 20px;
 }
 
 /* ===============================
    PRODUCT IMAGE + VIEWER
 ================================ */
 .product-image {
-    position: relative;
     width: 100%;
     max-width: 400px;
-    margin: 20px;
     background-color: #e6e6e6;
     border-radius: 25px;
-    padding: 20px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -329,7 +334,8 @@ footer {
     width: 100%;
     max-width: 400px;
     text-align: left;
-    margin: 20px;
+    margin: 0 auto;
+    padding: 0 10px;
 }
 
 .product-details h3 {
@@ -442,7 +448,6 @@ footer {
     border-radius: 8px;
     border: 1px solid #ccc;
     font-size: 14px;
-    box-sizing: border-box;
 }
 
 .book-form textarea {
@@ -525,11 +530,15 @@ footer {
     .product-container {
         flex-direction: column;
         align-items: center;
+        padding: 10px;
     }
 
-    .product-image, .product-details {
-        width: 90%;
-        max-width: 400px;
+    .product-image,
+    .product-details {
+        max-width: 90%;
+        width: 100%;
+        margin: 10px auto;
+        padding: 10px;
     }
 }
 
