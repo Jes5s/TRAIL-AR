@@ -7,12 +7,14 @@
 </head>
 <body>
 <script>
-  // Detect iOS
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    window.location.href = "/3D_Demo/wall.usdz"; // your USDZ file
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (ios) {
+    // iOS Quick Look
+    window.location.href = "/3D_Demo/wall.usdz";
   } else {
-    // Android and others
-    window.location.href = "/3D_Demo/Grill_white.glb"; // your GLB file
+    // Android Scene Viewer
+    window.location.href = "intent://arvr.google.com/scene-viewer/1.0?file=https://trail-ar.vercel.app/3D_Demo/Grill_white.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;end";
   }
 </script>
 </body>
