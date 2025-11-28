@@ -5,6 +5,12 @@
         "headers": [
           { "key": "Content-Type", "value": "model/vnd.usdz+zip" }
         ]
+      },
+      {
+        "source": "/3D_Demo/(.*\\.glb)",
+        "headers": [
+          { "key": "Content-Type", "value": "model/gltf-binary" }
+        ]
       }
     ]
   }
