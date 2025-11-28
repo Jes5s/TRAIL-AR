@@ -1,57 +1,195 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Open AR</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fafafa;color:#111}
     .msg{max-width:520px;text-align:center;padding:20px}
-    a.button{display:inline-block;margin:8px 4px;padding:10px 14px;border-radius:8px;background:#f0f0f0;color:#222;text-decoration:none}
+    a.button{display:inline-block;margin:8px 4px;padding:10px 14px;border-radius:8px;background:#0070f3;color:#fff;text-decoration:none;font-weight:600}
+    .muted{font-size:0.9em;color:#666}
+    .small{font-size:0.85em;color:#444;margin-top:8px;word-break:break-all}
   </style>
 </head>
 <body>
-  <div class="msg">
-    <p>Opening AR viewer… If nothing happens, <a id="fallbackLink" href="#">tap here</a>.</p>
-    <p style="font-size:0.9em;color:#666">Model: <span id="modelName">default</span></p>
+  <div class="msg" id="msg">
+    <p id="status">Opening AR viewer… If nothing happens, use the button below.</p>
+    <div id="actions" style="margin-top:12px;display:none">
+      <a id="primary" class="button" href="#" target="_blank" rel="noopener">Open AR</a>
+      <a id="secondary" style="margin-left:8px;text-decoration:underline;color:#0070f3" href="#" target="_blank" rel="noopener">Open fallback</a>
+    </div>
+    <p class="muted">Model: <span id="modelName">default</span></p>
+    <p class="small" id="debug"></p>
   </div>
 
-  <script>
-  (function(){
-    const params = new URLSearchParams(window.location.search);
-    const model = params.get('model') || 'Grill_white';
+<script>
+(async function () {
+  // Read param
+  const params = new URLSearchParams(window.location.search);
+  let modelParam = params.get('model') || 'wall'; // default
+  modelParam = modelParam.trim();
 
-    // Update display
-    document.getElementById('modelName').textContent = model;
+  // fallback page (product page) - change if your product page differs
+  const fallbackPage = params.get('fallback') || '/product_grills.html';
 
-    const base = "https://trail-ar.vercel.app";
-    // model files expected under /public/3D_Demo/
-    const usdz = `${base}/public/3D_Demo/${model}.usdz`;
-    const glb  = `${base}/public/3D_Demo/${model}.glb`;
+  // Helpers
+  const isFullUrl = s => /^https?:\/\//i.test(s);
+  const hasExt = s => /\.[a-zA-Z0-9]+$/.test(s);
+  const origin = location.origin.replace(/\/$/, '');
+  function normalizeModelInput(input) {
+    // Examples accepted:
+    // "wall", "wall.glb", "/3D_Demo/wall.glb", "https://.../wall.glb"
+    if (!input) return null;
+    if (isFullUrl(input)) return { glb: input.replace(/\.usdz$/i, '.glb'), usdz: input.replace(/\.glb$/i, '.usdz') };
+    // remove leading slashes
+    const cleaned = input.replace(/^\/+/, '');
+    // if input already contains 3D_Demo folder
+    if (/^3D_Demo\//i.test(cleaned)) {
+      const pathNoLeading = '/' + cleaned;
+      const glb = pathNoLeading.replace(/\.usdz$/i, '.glb');
+      const usdz = pathNoLeading.replace(/\.glb$/i, '.usdz');
+      return { glb: origin + glb, usdz: origin + usdz };
+    }
+    // if input has extension:
+    if (hasExt(cleaned)) {
+      const name = cleaned.replace(/.*[\/\\]/, '');
+      const baseName = name.replace(/\.(glb|usdz)$/i, '');
+      return { glb: origin + '/3D_Demo/' + baseName + '.glb', usdz: origin + '/3D_Demo/' + baseName + '.usdz' };
+    }
+    // plain model name like "wall"
+    return { glb: origin + '/3D_Demo/' + cleaned + '.glb', usdz: origin + '/3D_Demo/' + cleaned + '.usdz' };
+  }
 
-    const quickLookUrl = usdz;
-    const sceneViewerUrl = `https://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(glb)}&mode=ar_preferred&title=${encodeURIComponent('IronLinks Model')}`;
+  function uaIsIOS(){
+    const ua = navigator.userAgent || navigator.vendor || '';
+    // iPadOS 13+ may report as Mac; detect via platform + touchpoints
+    return /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+  function uaIsAndroid(){
+    return /Android/.test(navigator.userAgent || '');
+  }
 
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    function isiOS() { return /iPad|iPhone|iPod/.test(ua) && !window.MSStream; }
-    function isAndroid() { return /Android/.test(ua); }
+  async function urlExists(url){
+    try {
+      // try HEAD (fast)
+      const res = await fetch(url, { method: 'HEAD' });
+      if (res.ok) return true;
+      // some hosts block HEAD -> try GET
+      const res2 = await fetch(url, { method: 'GET' });
+      return res2.ok;
+    } catch(e){
+      return false;
+    }
+  }
 
-    const fallback = `${base}/public/product_grills.html`;
-    const fallbackLinkEl = document.getElementById('fallbackLink');
+  // Build Scene Viewer links for Android
+  function sceneViewerIntent(modelUrl, title='AR Model'){
+    // intent:// to attempt to open Scene Viewer directly
+    const file = encodeURIComponent(modelUrl);
+    const t = encodeURIComponent(title);
+    const fallback = encodeURIComponent(origin + '/ar.html?model=' + encodeURIComponent(modelParam));
+    // package com.google.android.googlequicksearchbox (Google app)
+    return `intent://arvr.google.com/scene-viewer/1.0?file=${file}&title=${t}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${fallback};end`;
+  }
+  function sceneViewerHttps(modelUrl, title='AR Model'){
+    return `https://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(modelUrl)}&title=${encodeURIComponent(title)}&mode=ar_preferred`;
+  }
 
-    if (isiOS()) {
-      fallbackLinkEl.href = quickLookUrl;
-      window.location = quickLookUrl;
-    } else if (isAndroid()) {
-      fallbackLinkEl.href = sceneViewerUrl;
-      window.location = sceneViewerUrl;
-    } else {
-      fallbackLinkEl.href = fallback;
-      window.location = fallback;
+  // Normalize inputs
+  const normalized = normalizeModelInput(modelParam);
+  const glbUrl = normalized && normalized.glb;
+  const usdzUrl = normalized && normalized.usdz;
+
+  // Update UI labels
+  document.getElementById('modelName').textContent = modelParam;
+  const actions = document.getElementById('actions');
+  const primary = document.getElementById('primary');
+  const secondary = document.getElementById('secondary');
+  const status = document.getElementById('status');
+  const debugEl = document.getElementById('debug');
+
+  debugEl.textContent = `User agent: ${navigator.userAgent}\nComputed GLB: ${glbUrl}\nComputed USDZ: ${usdzUrl}\nFallback page: ${fallbackPage}`;
+
+  // Decide flow
+  try {
+    if (uaIsIOS()) {
+      status.textContent = 'iOS detected — opening Quick Look if .usdz is available...';
+      actions.style.display = 'block';
+      // Check usdz first
+      const okUsdz = await urlExists(usdzUrl);
+      if (okUsdz) {
+        primary.textContent = 'Open Quick Look (iOS)';
+        primary.href = usdzUrl;
+        secondary.textContent = 'Open fallback page';
+        secondary.href = fallbackPage;
+        // attempt automatic navigation (Quick Look will open when navigated to .usdz in Safari)
+        // small delay so QR camera UI can finish
+        setTimeout(()=> { window.location.href = usdzUrl; }, 450);
+        return;
+      } else {
+        // USDZ not available -> present fallback
+        status.textContent = 'No .usdz found for this model — opening fallback product page.';
+        primary.textContent = 'Open product page';
+        primary.href = fallbackPage;
+        secondary.style.display = 'none';
+        setTimeout(()=> { window.location.href = fallbackPage; }, 400);
+        return;
+      }
     }
 
-    setTimeout(()=>{ if (document.visibilityState === 'visible') window.location = fallback; }, 2500);
-  })();
-  </script>
+    if (uaIsAndroid()) {
+      status.textContent = 'Android detected — attempting to open Scene Viewer...';
+      actions.style.display = 'block';
+      // Check GLB availability (Scene Viewer needs GLB)
+      const okGlb = await urlExists(glbUrl);
+      const scTitle = params.get('title') || 'IronLinks AR';
+      if (!okGlb) {
+        status.textContent = 'GLB model not found on server — opening fallback product page.';
+        primary.textContent = 'Open product page';
+        primary.href = fallbackPage;
+        secondary.style.display = 'none';
+        setTimeout(()=> { window.location.href = fallbackPage; }, 400);
+        return;
+      }
+      // Build intent and https fallback
+      const intentLink = sceneViewerIntent(glbUrl, scTitle);
+      const httpsLink = sceneViewerHttps(glbUrl, scTitle);
+
+      primary.textContent = 'Open Scene Viewer';
+      primary.href = intentLink; // clicking will try intent
+      secondary.textContent = 'If Scene Viewer didn\'t open, tap here';
+      secondary.href = httpsLink;
+
+      // Try to auto-navigate to the intent (most QR scanner flows will open it)
+      setTimeout(()=> {
+        // first try intent link
+        window.location.href = intentLink;
+        // as backup, after short delay go to https scene viewer
+        setTimeout(()=> { window.location.href = httpsLink; }, 800);
+      }, 400);
+
+      return;
+    }
+
+    // Desktop or unknown
+    status.textContent = 'No mobile AR detected — opening product page.';
+    actions.style.display = 'block';
+    primary.textContent = 'Open product page';
+    primary.href = fallbackPage;
+    secondary.style.display = 'none';
+    setTimeout(()=> { window.location.href = fallbackPage; }, 400);
+    return;
+
+  } catch (err) {
+    console.error('AR redirect error', err);
+    status.textContent = 'An error occurred. Use the links below.';
+    actions.style.display = 'block';
+    primary.textContent = 'Fallback';
+    primary.href = fallbackPage;
+    secondary.style.display = 'none';
+  }
+})();
+</script>
 </body>
 </html>
