@@ -3,193 +3,142 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Open AR</title>
+  <title>IronLinks AR Viewer</title>
+
+  <!-- model-viewer (stable) -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fafafa;color:#111}
-    .msg{max-width:520px;text-align:center;padding:20px}
-    a.button{display:inline-block;margin:8px 4px;padding:10px 14px;border-radius:8px;background:#0070f3;color:#fff;text-decoration:none;font-weight:600}
-    .muted{font-size:0.9em;color:#666}
-    .small{font-size:0.85em;color:#444;margin-top:8px;word-break:break-all}
+    body { margin:0; font-family:system-ui, Roboto, Arial; display:flex; flex-direction:column; min-height:100vh; }
+    header { padding:12px; background:#111; color:white; text-align:center; }
+    main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:12px; }
+    .viewer-wrap { width:100%; max-width:900px; aspect-ratio: 16/9; background:#000; border-radius:10px; overflow:hidden; display:flex; }
+    model-viewer { width:100%; height:100%; }
+    .controls { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+    .notice { color:#666; font-size:14px; text-align:center; max-width:800px; }
+    .error { color:crimson; font-weight:600; }
+    a.btn { background:#1976d2; color:white; padding:8px 14px; border-radius:8px; text-decoration:none; }
   </style>
 </head>
 <body>
-  <div class="msg" id="msg">
-    <p id="status">Opening AR viewer… If nothing happens, use the button below.</p>
-    <div id="actions" style="margin-top:12px;display:none">
-      <a id="primary" class="button" href="#" target="_blank" rel="noopener">Open AR</a>
-      <a id="secondary" style="margin-left:8px;text-decoration:underline;color:#0070f3" href="#" target="_blank" rel="noopener">Open fallback</a>
+  <header>
+    <h1>IronLinks — AR Viewer</h1>
+  </header>
+
+  <main>
+    <div class="viewer-wrap" id="viewerWrap">
+      <!-- model-viewer will be inserted here dynamically -->
+      <div id="loader" style="color:#ddd;display:flex;align-items:center;justify-content:center;width:100%;">Preparing AR viewer…</div>
     </div>
-    <p class="muted">Model: <span id="modelName">default</span></p>
-    <p class="small" id="debug"></p>
-  </div>
 
-<script>
-(async function () {
-  // Read param
-  const params = new URLSearchParams(window.location.search);
-  let modelParam = params.get('model') || 'wall'; // default
-  modelParam = modelParam.trim();
+    <div class="controls" id="controls"></div>
+    <p class="notice">
+      Use your phone camera to view the model in your space. If AR fails to open, try the direct links shown below.
+    </p>
 
-  // fallback page (product page) - change if your product page differs
-  const fallbackPage = params.get('fallback') || '/product_grills.html';
+    <div id="fallbackLinks" style="text-align:center;"></div>
+    <p id="status" class="notice"></p>
+  </main>
 
-  // Helpers
-  const isFullUrl = s => /^https?:\/\//i.test(s);
-  const hasExt = s => /\.[a-zA-Z0-9]+$/.test(s);
-  const origin = location.origin.replace(/\/$/, '');
-  function normalizeModelInput(input) {
-    // Examples accepted:
-    // "wall", "wall.glb", "/3D_Demo/wall.glb", "https://.../wall.glb"
-    if (!input) return null;
-    if (isFullUrl(input)) return { glb: input.replace(/\.usdz$/i, '.glb'), usdz: input.replace(/\.glb$/i, '.usdz') };
-    // remove leading slashes
-    const cleaned = input.replace(/^\/+/, '');
-    // if input already contains 3D_Demo folder
-    if (/^3D_Demo\//i.test(cleaned)) {
-      const pathNoLeading = '/' + cleaned;
-      const glb = pathNoLeading.replace(/\.usdz$/i, '.glb');
-      const usdz = pathNoLeading.replace(/\.glb$/i, '.usdz');
-      return { glb: origin + glb, usdz: origin + usdz };
+  <script>
+    // --- Configuration: map model keys to actual filenames (in /models)
+    const MODEL_REGISTRY = {
+      "wall": { glb: "/models/wall.glb", usdz: "/models/wall.usdz", label: "Wall (placeholder)" },
+      // future: "gate1": { glb: "/models/gate1.glb", usdz: "/models/gate1.usdz", label: "Gate A" },
+      // add more entries as you upload models to /public/models/
+    };
+
+    // Utility: get ?model=name (default 'wall')
+    function getQueryParam(name, defaultVal) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name) || defaultVal;
     }
-    // if input has extension:
-    if (hasExt(cleaned)) {
-      const name = cleaned.replace(/.*[\/\\]/, '');
-      const baseName = name.replace(/\.(glb|usdz)$/i, '');
-      return { glb: origin + '/3D_Demo/' + baseName + '.glb', usdz: origin + '/3D_Demo/' + baseName + '.usdz' };
+
+    // detect iOS QuickLook support (iPhone/iPad Safari)
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     }
-    // plain model name like "wall"
-    return { glb: origin + '/3D_Demo/' + cleaned + '.glb', usdz: origin + '/3D_Demo/' + cleaned + '.usdz' };
-  }
 
-  function uaIsIOS(){
-    const ua = navigator.userAgent || navigator.vendor || '';
-    // iPadOS 13+ may report as Mac; detect via platform + touchpoints
-    return /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  }
-  function uaIsAndroid(){
-    return /Android/.test(navigator.userAgent || '');
-  }
-
-  async function urlExists(url){
-    try {
-      // try HEAD (fast)
-      const res = await fetch(url, { method: 'HEAD' });
-      if (res.ok) return true;
-      // some hosts block HEAD -> try GET
-      const res2 = await fetch(url, { method: 'GET' });
-      return res2.ok;
-    } catch(e){
-      return false;
+    // build scene-viewer intent (Android) as fallback link
+    function buildSceneViewerIntent(gltfUrl, fallbackUrl) {
+      // safe-encoded urls
+      const file = encodeURIComponent(gltfUrl);
+      const fallback = encodeURIComponent(fallbackUrl);
+      return `intent://arvr.google.com/scene-viewer/1.0?file=${file}&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${fallback};end`;
     }
-  }
 
-  // Build Scene Viewer links for Android
-  function sceneViewerIntent(modelUrl, title='AR Model'){
-    // intent:// to attempt to open Scene Viewer directly
-    const file = encodeURIComponent(modelUrl);
-    const t = encodeURIComponent(title);
-    const fallback = encodeURIComponent(origin + '/ar.html?model=' + encodeURIComponent(modelParam));
-    // package com.google.android.googlequicksearchbox (Google app)
-    return `intent://arvr.google.com/scene-viewer/1.0?file=${file}&title=${t}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${fallback};end`;
-  }
-  function sceneViewerHttps(modelUrl, title='AR Model'){
-    return `https://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(modelUrl)}&title=${encodeURIComponent(title)}&mode=ar_preferred`;
-  }
+    // main
+    (function(){
+      const modelKey = getQueryParam('model','wall');
+      const entry = MODEL_REGISTRY[modelKey];
 
-  // Normalize inputs
-  const normalized = normalizeModelInput(modelParam);
-  const glbUrl = normalized && normalized.glb;
-  const usdzUrl = normalized && normalized.usdz;
+      const status = document.getElementById('status');
+      const viewerWrap = document.getElementById('viewerWrap');
+      const fallbackLinks = document.getElementById('fallbackLinks');
+      const controls = document.getElementById('controls');
 
-  // Update UI labels
-  document.getElementById('modelName').textContent = modelParam;
-  const actions = document.getElementById('actions');
-  const primary = document.getElementById('primary');
-  const secondary = document.getElementById('secondary');
-  const status = document.getElementById('status');
-  const debugEl = document.getElementById('debug');
-
-  debugEl.textContent = `User agent: ${navigator.userAgent}\nComputed GLB: ${glbUrl}\nComputed USDZ: ${usdzUrl}\nFallback page: ${fallbackPage}`;
-
-  // Decide flow
-  try {
-    if (uaIsIOS()) {
-      status.textContent = 'iOS detected — opening Quick Look if .usdz is available...';
-      actions.style.display = 'block';
-      // Check usdz first
-      const okUsdz = await urlExists(usdzUrl);
-      if (okUsdz) {
-        primary.textContent = 'Open Quick Look (iOS)';
-        primary.href = usdzUrl;
-        secondary.textContent = 'Open fallback page';
-        secondary.href = fallbackPage;
-        // attempt automatic navigation (Quick Look will open when navigated to .usdz in Safari)
-        // small delay so QR camera UI can finish
-        setTimeout(()=> { window.location.href = usdzUrl; }, 450);
-        return;
-      } else {
-        // USDZ not available -> present fallback
-        status.textContent = 'No .usdz found for this model — opening fallback product page.';
-        primary.textContent = 'Open product page';
-        primary.href = fallbackPage;
-        secondary.style.display = 'none';
-        setTimeout(()=> { window.location.href = fallbackPage; }, 400);
+      if (!entry) {
+        status.innerHTML = `<span class="error">Model "${modelKey}" not found in registry.</span> Add it to MODEL_REGISTRY in ar.html and upload the files to /public/models/.`;
+        document.getElementById('loader').style.display = 'none';
         return;
       }
-    }
 
-    if (uaIsAndroid()) {
-      status.textContent = 'Android detected — attempting to open Scene Viewer...';
-      actions.style.display = 'block';
-      // Check GLB availability (Scene Viewer needs GLB)
-      const okGlb = await urlExists(glbUrl);
-      const scTitle = params.get('title') || 'IronLinks AR';
-      if (!okGlb) {
-        status.textContent = 'GLB model not found on server — opening fallback product page.';
-        primary.textContent = 'Open product page';
-        primary.href = fallbackPage;
-        secondary.style.display = 'none';
-        setTimeout(()=> { window.location.href = fallbackPage; }, 400);
-        return;
+      // create a <model-viewer> element
+      const mv = document.createElement('model-viewer');
+      mv.setAttribute('alt', entry.label || modelKey);
+      mv.setAttribute('camera-controls','');
+      mv.setAttribute('ar',''); // enable AR
+      mv.setAttribute('reveal','interaction'); // or 'auto'
+      mv.style.backgroundColor = '#000';
+
+      // src and ios-src
+      mv.src = entry.glb;
+      if (entry.usdz) mv.setAttribute('ios-src', entry.usdz);
+
+      // accessibility / poster / loading
+      mv.setAttribute('loading','eager');
+
+      // append
+      viewerWrap.innerHTML = ""; // remove loader
+      viewerWrap.appendChild(mv);
+
+      // Show direct fallback links (Quick Look and Scene Viewer)
+      const absoluteGLB = new URL(entry.glb, window.location.href).href;
+      const absoluteUSDZ = entry.usdz ? new URL(entry.usdz, window.location.href).href : null;
+
+      // Quick Look link for iOS (just the .usdz)
+      if (absoluteUSDZ) {
+        const ql = document.createElement('a');
+        ql.href = absoluteUSDZ;
+        ql.rel = "ar";
+        ql.innerText = "Open in Quick Look (iOS)";
+        ql.className = "btn";
+        ql.style.marginRight = "8px";
+        fallbackLinks.appendChild(ql);
       }
-      // Build intent and https fallback
-      const intentLink = sceneViewerIntent(glbUrl, scTitle);
-      const httpsLink = sceneViewerHttps(glbUrl, scTitle);
 
-      primary.textContent = 'Open Scene Viewer';
-      primary.href = intentLink; // clicking will try intent
-      secondary.textContent = 'If Scene Viewer didn\'t open, tap here';
-      secondary.href = httpsLink;
+      // Scene Viewer (Android intent)
+      const sceneIntent = buildSceneViewerIntent(absoluteGLB, window.location.href);
+      const sceneBtn = document.createElement('a');
+      sceneBtn.href = sceneIntent;
+      sceneBtn.innerText = "Open in Scene Viewer (Android)";
+      sceneBtn.className = "btn";
+      fallbackLinks.appendChild(sceneBtn);
 
-      // Try to auto-navigate to the intent (most QR scanner flows will open it)
-      setTimeout(()=> {
-        // first try intent link
-        window.location.href = intentLink;
-        // as backup, after short delay go to https scene viewer
-        setTimeout(()=> { window.location.href = httpsLink; }, 800);
-      }, 400);
+      // small control area showing which files will be used
+      controls.innerHTML = `<div style="font-size:13px;color:#444">Model: <strong>${modelKey}</strong> — GLB: <code>${absoluteGLB}</code>${absoluteUSDZ ? `<br> USDZ: <code>${absoluteUSDZ}</code>` : ''}</div>`;
 
-      return;
-    }
+      // error handling to show useful messages
+      mv.addEventListener('error', (ev) => {
+        console.error('model-viewer error', ev);
+        status.innerHTML = `<span class="error">Failed to load model. Check that the files exist, are valid, and are publicly accessible (404/CORS/MIME). See console for details.</span>`;
+      });
 
-    // Desktop or unknown
-    status.textContent = 'No mobile AR detected — opening product page.';
-    actions.style.display = 'block';
-    primary.textContent = 'Open product page';
-    primary.href = fallbackPage;
-    secondary.style.display = 'none';
-    setTimeout(()=> { window.location.href = fallbackPage; }, 400);
-    return;
+      mv.addEventListener('load', () => {
+        status.innerText = "Model loaded. Tap the AR button (if present) to view in your space.";
+      });
 
-  } catch (err) {
-    console.error('AR redirect error', err);
-    status.textContent = 'An error occurred. Use the links below.';
-    actions.style.display = 'block';
-    primary.textContent = 'Fallback';
-    primary.href = fallbackPage;
-    secondary.style.display = 'none';
-  }
-})();
-</script>
+    })();
+  </script>
 </body>
 </html>
