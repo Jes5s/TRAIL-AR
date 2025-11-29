@@ -16,3 +16,18 @@ Frontend: HTML, CSS, JavaScript
 Backend: Node.js
 Database: Supabase
 Deployment: Vercel
+
+
+
+for future use/notes:
+
+
+redirect.html: 
+
+when adding new 3d files
+Replace wall with gate1, grill_white, etc. depending on the product.
+
+"modelName": {
+  glb: "/models/modelName.glb",
+  usdz: "/models/modelName.usdz",
+},

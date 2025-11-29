@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Launching AR…</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      background: #111;
+      color: #eee;
+    }
+    .box {
+      max-width: 380px;
+    }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h2>Launching AR Viewer…</h2>
+  <p>If nothing happens, your device may not support AR.</p>
+</div>
+
+<script>
+  // -------------------------------
+  // MODEL REGISTRY — EDIT THIS ONLY
+  // -------------------------------
+  const MODELS = {
+    "wall": {
+      glb: "/models/wall.glb",
+      usdz: "/models/wall.usdz",
+    },
+    // add more like:
+    // "gate1": { glb: "/models/gate1.glb", usdz: "/models/gate1.usdz" },
+    // "grill_white": { glb: "/models/grill_white.glb", usdz: "/models/grill_white.usdz" },
+  };
+
+  function getQueryParam(name, fallback) {
+    const params = new URLSearchParams(location.search);
+    return params.get(name) || fallback;
+  }
+
+  const modelKey = getQueryParam("model", "wall");
+  const model = MODELS[modelKey];
+
+  if (!model) {
+    document.body.innerHTML = `<h2 style="color:red;">Model not found: ${modelKey}</h2>`;
+    throw new Error("Unknown model");
+  }
+
+  const glbUrl = location.origin + model.glb;
+  const usdzUrl = location.origin + model.usdz;
+
+  // Device detection
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+
+  // ------------------------------
+  // 1) iOS → QUICK LOOK (USDZ)
+  // ------------------------------
+  if (isIOS) {
+    // Quick Look requires setting window.location to a USDC/USDX file
+    window.location.replace(usdzUrl);
+  }
+
+  // ------------------------------
+  // 2) Android → SCENE VIEWER
+  // ------------------------------
+  if (isAndroid) {
+    const intentUrl =
+      `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(glbUrl)}` +
+      `&mode=ar_preferred` +
+      `#Intent;scheme=https;package=com.google.android.googlequicksearchbox;` +
+      `action=android.intent.action.VIEW;` +
+      `S.browser_fallback_url=${encodeURIComponent(glbUrl)};` +
+      `end`;
+
+    window.location.replace(intentUrl);
+  }
+
+  // ------------------------------
+  // 3) Other devices (desktop)
+  // ------------------------------
+  setTimeout(() => {
+    document.body.innerHTML = `
+      <h2>AR not supported on this device</h2>
+      <p>You can still download the model directly:</p>
+      <p><a href="${glbUrl}" style="color:#0bf;">Download GLB</a></p>
+      <p><a href="${usdzUrl}" style="color:#0bf;">Download USDZ</a></p>
+    `;
+  }, 1500);
+</script>
+</body>
+</html>
