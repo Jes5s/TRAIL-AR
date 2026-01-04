@@ -81,16 +81,26 @@ Content-Type: ${glbHead.contentType || 'unknown'}</pre>
   }
 
   // Device detection
-  const ua = navigator.userAgent || navigator.vendor || window.opera;
-  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-  const isAndroid = /Android/.test(ua);
+  // Device detection (Desktop-View–safe)
+const ua = navigator.userAgent || navigator.vendor || window.opera;
+
+const isAndroid = /Android/i.test(ua);
+
+// iOS detection that survives "Request Desktop Website"
+const isIOSUA = /iPad|iPhone|iPod/i.test(ua);
+const isTouchDevice =
+  ('ontouchstart' in window) ||
+  (navigator.maxTouchPoints > 1);
+
+// iPad / iPhone in Desktop Mode reports "Macintosh"
+const isLikelyIOS = isIOSUA || (isTouchDevice && /Macintosh/i.test(ua));
 
   // Helpful debug output (visible briefly)
   console.log('GLB head', glbHead);
   console.log('USDZ head', usdzHead);
 
   // iOS: try using an <a rel="ar"> and trigger click programmatically (works more reliably)
-  if (isIOS) {
+  if (isLikelyIOS) {
     info.innerText = 'iOS device detected — opening Quick Look...';
     // create anchor
     const a = document.createElement('a');
