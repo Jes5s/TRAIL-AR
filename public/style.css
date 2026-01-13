@@ -703,3 +703,47 @@ footer {
   }
 }
 
+/* product .html variation css */
+.options {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.option-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.option-btn.active {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1976d2;
+}
+
+/* REVISIT THIS PLS OMG ILANG LINES NA NG CSS TO */
+.quote-btn {
+  display: inline-block;
+  background: #1976d2;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  text-decoration: none;   /* ⬅ removes underline */
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+}
+
+.quote-btn:hover {
+  background: #125aa3;
+}
+
+.quote-btn:visited {
+  color: #ffffff;          /* ⬅ prevents purple visited link */
+}
+
