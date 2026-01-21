@@ -7,73 +7,74 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <header>
-    <h1>Iron <span>works</span></h1>
-    <nav>
-      <a href="index.html">about us</a> |
-      <a href="products.html">products</a> |
-      <a href="book.html">book now</a> |
-      <a href="#contact">contact</a>
-    </nav>
+  <h1>Iron <span>works</span></h1>
+  <nav>
+    <a href="index.html">about us</a> |
+    <a href="products.html">products</a> |
+    <a href="book.html">book now</a> |
+    <a href="#contact">contact</a>
+  </nav>
 </header>
 
 <section class="book-section">
-    <h2>Book a Consultation</h2>
-    <form id="bookingForm" class="book-form" method="POST" action="/book">
-        <!-- Name: letters only -->
-        <input type="text" name="name" placeholder="Full Name" pattern="[A-Za-z\s]+" title="Letters only" required>
+  <h2>Book a Consultation</h2>
 
-        <!-- Email: native validation -->
-        <input type="email" name="email" placeholder="Email" required>
+  <form id="bookingForm" class="book-form" enctype="multipart/form-data">
+    <input type="text" name="name" placeholder="Full Name"
+      pattern="[A-Za-z\s]+" required>
 
-        <!-- Phone: 11 digits starting with 09 -->
-        <input type="tel" name="phone" placeholder="Phone Number (09XXXXXXXXX)" pattern="09[0-9]{9}" title="11 digits starting with 09" required>
+    <input type="email" name="email" placeholder="Email" required>
 
-        <!-- Date: no past dates -->
-        <input type="date" name="date" id="dateInput" required>
+    <input type="tel" name="phone"
+      placeholder="Phone Number (09XXXXXXXXX)"
+      pattern="09[0-9]{9}" required>
 
-        <input type="time" name="time" required>
-        <textarea name="request" placeholder="Additional Details"></textarea>
-        <button type="submit">Submit Booking</button>
-    </form>
-    <p id="statusMessage" style="color:red;"></p>
+    <input type="date" name="date" id="dateInput" required>
+    <input type="time" name="time" required>
+
+    <textarea name="request" placeholder="Additional Details"></textarea>
+
+    <label>
+      Upload reference image (optional)
+      <input type="file" name="reference_image" accept="image/*">
+    </label>
+
+    <button type="submit">Submit Booking</button>
+  </form>
+
+  <p id="statusMessage" style="color:red;"></p>
 </section>
 
 <script>
-  // Prevent past dates
-  const dateInput = document.getElementById('dateInput');
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.setAttribute('min', today);
+const dateInput = document.getElementById('dateInput');
+dateInput.min = new Date().toISOString().split('T')[0];
 
-  // Handle form submission
-  const form = document.getElementById('bookingForm');
-  const statusMessage = document.getElementById('statusMessage');
+const form = document.getElementById('bookingForm');
+const statusMessage = document.getElementById('statusMessage');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  statusMessage.textContent = '';
 
-    statusMessage.textContent = '';
+  const formData = new FormData(form);
 
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
+  try {
+    const res = await fetch('/book', {
+      method: 'POST',
+      body: formData
+    });
 
-    try {
-      const res = await fetch('/book', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text);
 
-      const text = await res.text();
-
-      if (!res.ok) throw new Error(text);
-
-      alert("Booking successful!");
-      form.reset();
-    } catch (err) {
-      statusMessage.textContent = err.message;
-    }
-  });
+    alert("Booking successful!");
+    form.reset();
+  } catch (err) {
+    statusMessage.textContent = err.message;
+  }
+});
 </script>
 
 <footer id="contact">
@@ -81,13 +82,10 @@
     <h2>Contact Us</h2>
     <p>📍 Address</p>
     <p>📱 Phone Number</p>
-    <p>📧 email</p>
-    <div class="social-links">
-      <a href="#">Facebook</a> |
-      <a href="#">Messenger</a>
-    </div>
+    <p>📧 Email</p>
     <p class="footer-note">© 2025 IronLinks. All Rights Reserved.</p>
   </div>
 </footer>
+
 </body>
 </html>
