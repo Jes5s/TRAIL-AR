@@ -10,6 +10,7 @@
   <!-- Google Model Viewer -->
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
+
 <body>
 
   <!-- Header -->
@@ -39,8 +40,9 @@
 
       <!-- Product Image and 3D/AR View -->
       <div class="product-image">
-        <!-- Static image (default view) -->
-        <img src="hompage_photos/gate2.webp" alt="Iron Gate" id="mainImage">
+
+        <!-- Static image -->
+        <img src="hompage_photos/gate2_classic.webp" alt="Iron Gate" id="mainImage">
 
         <!-- 3D & AR viewer -->
         <model-viewer
@@ -68,20 +70,20 @@
         <h3>Modular Arc Gate Display (MAGD)</h3>
         
         <h4>Details</h4>
-<ul>
-  <li><strong>Price Range:</strong> ₱45,000 – ₱70,000</li>
-  <li><strong>Material:</strong> Wrought Iron</li>
-  <li><strong>Finish:</strong> Powder-Coated</li>
-  <li><strong>Welding:</strong> Fully Welded Joints</li>
-  <li><strong>Customization:</strong> Size, color, and pattern available</li>
-</ul>
+        <ul>
+          <li><strong>Price Range:</strong> ₱45,000 – ₱70,000</li>
+          <li><strong>Material:</strong> Wrought Iron</li>
+          <li><strong>Finish:</strong> Powder-Coated</li>
+          <li><strong>Welding:</strong> Fully Welded Joints</li>
+          <li><strong>Customization:</strong> Size, color, and pattern available</li>
+        </ul>
         
-<h4>Design Variations</h4>
-<div id="variationOptions" class="options">
-  <button class="option-btn active" data-variation="classic">Classic</button>
-  <button class="option-btn" data-variation="double">Double</button>
-  <button class="option-btn" data-variation="arctop">Arc Top</button>
-</div>
+        <h4>Design Variations</h4>
+        <div id="variationOptions" class="options">
+          <button class="option-btn active" data-variation="classic">Classic</button>
+          <button class="option-btn" data-variation="double">Double</button>
+          <button class="option-btn" data-variation="arctop">Arc Top</button>
+        </div>
 
         <div class="quote-box">
           <h4>Start Your Custom Project</h4>
@@ -103,7 +105,9 @@
   </div>
 
   <script>
-    // 3D view toggle
+    /* ============================
+       3D VIEW TOGGLE
+       ============================ */
     const view3dBtn = document.getElementById("view3d");
     const model3D = document.getElementById("gate3D");
     const mainImage = document.getElementById("mainImage");
@@ -115,7 +119,9 @@
       view3dBtn.textContent = isHidden ? "Image View" : "3D View";
     });
 
-    // QR Code modal
+    /* ============================
+       QR MODAL
+       ============================ */
     const viewQRBtn = document.getElementById("viewQR");
     const qrModal = document.getElementById("qrModal");
     const closeQRBtn = document.getElementById("closeQR");
@@ -128,36 +134,60 @@
       qrModal.style.display = "none";
     });
 
-    // Close modal when clicking outside
     window.addEventListener("click", (e) => {
       if (e.target === qrModal) qrModal.style.display = "none";
     });
 
-    // variation picker
+    /* ============================
+       DESIGN VARIATION SWITCHER
+       ============================ */
 
-const variationButtons = document.querySelectorAll(".option-btn");
-  let selectedVariation = "classic"; // placeholder only
+    const variations = {
+      classic: {
+        image: "hompage_photos/gate2_classic.webp",
+        glb: "models/wall.glb",
+        usdz: "models/wall.usdz"
+      },
+      double: {
+        image: "hompage_photos/gate2_double.webp",
+        glb: "models/wall2.glb",
+        usdz: "models/wall.usdz"
+      },
+      arctop: {
+        image: "hompage_photos/gate2_arcTop.webp",
+        glb: "models/wall3.glb",
+        usdz: "models/wall.usdz"
+      }
+    };
 
-  variationButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      // remove active from all
-      variationButtons.forEach(b => b.classList.remove("active"));
+    const variationButtons = document.querySelectorAll(".option-btn");
 
-      // activate clicked
-      btn.classList.add("active");
-      selectedVariation = btn.dataset.variation;
+    variationButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
 
-      console.log("Selected variation:", selectedVariation);
+        // active button UI
+        variationButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
 
-      // FUTURE USE:
-      // switch 3D models later
+        const selected = btn.dataset.variation;
+        const data = variations[selected];
+
+        // reset to image view
+        model3D.style.display = "none";
+        mainImage.style.display = "block";
+        view3dBtn.textContent = "3D View";
+
+        // update image
+        mainImage.src = data.image;
+
+        // update 3D / AR model
+        model3D.setAttribute("src", data.glb);
+        model3D.setAttribute("ios-src", data.usdz);
+      });
     });
-  });
-
-  
   </script>
 
-<footer id="contact">
+  <footer id="contact">
     <div class="footer-container">
       <h2>Contact Us</h2>
       <p>📍 Address</p>
@@ -172,5 +202,6 @@ const variationButtons = document.querySelectorAll(".option-btn");
       <p class="footer-note">© 2025 IronLinks. All Rights Reserved.</p>
     </div>
   </footer>
+
 </body>
 </html>
