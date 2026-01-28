@@ -7,69 +7,95 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <header>
-    <h1>Iron <span>works</span></h1>
-    <nav>
-      <a href="index.html">about us</a> |
-      <a href="products.html">products</a> |
-      <a href="book.html">book now</a> |
-      <a href="#contact">contact</a>
-    </nav>
+  <h1>Iron <span>works</span></h1>
+  <nav>
+    <a href="index.html">about us</a> |
+    <a href="products.html">products</a> |
+    <a href="book.html">book now</a> |
+    <a href="#contact">contact</a>
+  </nav>
 </header>
 
 <section class="book-section">
-    <h2>Book a Consultation</h2>
-    <form id="bookingForm" class="book-form">
-        <input type="text" name="name" placeholder="Full Name" required>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="tel" name="phone" placeholder="Phone Number" required>
-        <input type="date" name="date" required>
-        <input type="time" name="time" required>
-        <textarea name="request" placeholder="Additional Details"></textarea>
-        <button type="submit">Submit Booking</button>
-    </form>
+  <h2>Book a Consultation</h2>
+
+  <form id="bookingForm" class="book-form" enctype="multipart/form-data">
+
+    <!-- Name: letters, spaces, and dots (for middle initials) -->
+    <input
+      type="text"
+      name="name"
+      placeholder="Full Name"
+      pattern="[A-Za-z.\s]+"
+      title="Letters, spaces, and dots only (e.g., Juan D. Cruz)"
+      required
+    >
+
+    <!-- Email -->
+    <input type="email" name="email" placeholder="Email" required>
+
+    <!-- Phone: 11 digits starting with 09 -->
+    <input
+      type="tel"
+      name="phone"
+      placeholder="Phone Number (09XXXXXXXXX)"
+      pattern="09[0-9]{9}"
+      title="11 digits starting with 09"
+      required
+    >
+
+    <!-- Date -->
+    <input type="date" name="date" id="dateInput" required>
+
+    <!-- Time -->
+    <input type="time" name="time" required>
+
+    <!-- Additional request -->
+    <textarea name="request" placeholder="Additional Details"></textarea>
+
+    <!-- Optional image -->
+    <label>
+      Upload reference image (optional)
+      <input type="file" name="reference_image" accept="image/*">
+    </label>
+
+    <button type="submit">Submit Booking</button>
+  </form>
+
+  <p id="statusMessage" style="color:red;"></p>
 </section>
 
-<!-- Popup Modal -->
-<div id="bookingModal">
-  <div id="bookingModalContent">
-    <p>Booking Successful!</p>
-    <button id="closeModal">Close</button>
-  </div>
-</div>
-
 <script>
-const form = document.getElementById('bookingForm');
-const modal = document.getElementById('bookingModal');
-const closeBtn = document.getElementById('closeModal');
+  // Prevent past dates
+  const dateInput = document.getElementById('dateInput');
+  dateInput.min = new Date().toISOString().split('T')[0];
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const formData = new FormData(form);
-  const data = Object.fromEntries(formData.entries());
+  const form = document.getElementById('bookingForm');
+  const statusMessage = document.getElementById('statusMessage');
 
-  try {
-    const res = await fetch('/book', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusMessage.textContent = '';
 
-    const text = await res.text();
+    const formData = new FormData(form);
 
-    if (!res.ok) throw new Error(text);
+    try {
+      const res = await fetch('/book', {
+        method: 'POST',
+        body: formData
+      });
 
-    modal.style.display = 'flex'; // Show popup
-    form.reset();
-  } catch (err) {
-    alert(err.message);
-    console.error(err);
-  }
-});
+      const text = await res.text();
+      if (!res.ok) throw new Error(text);
 
-// Close modal
-closeBtn.addEventListener('click', () => modal.style.display = 'none');
-window.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+      alert("Booking successful!");
+      form.reset();
+    } catch (err) {
+      statusMessage.textContent = err.message;
+    }
+  });
 </script>
 
 <footer id="contact">
@@ -77,15 +103,10 @@ window.addEventListener('click', e => { if (e.target === modal) modal.style.disp
     <h2>Contact Us</h2>
     <p>📍 Address</p>
     <p>📱 Phone Number</p>
-    <p>📧 email</p>
-
-    <div class="social-links">
-      <a href="#">Facebook</a> |
-      <a href="#">Messenger</a>
-    </div>
-
+    <p>📧 Email</p>
     <p class="footer-note">© 2025 IronLinks. All Rights Reserved.</p>
   </div>
 </footer>
+
 </body>
 </html>
