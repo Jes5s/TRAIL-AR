@@ -12,9 +12,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+<<<<<<< HEAD
     "@supabase/supabase-js": "^2.91.1",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1"
+=======
+    "@supabase/supabase-js": "^2.83.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "multer": "^2.0.2"
+>>>>>>> 658afc7eefbfe304be19a12a8f0307aa2307c2e2
   }
 }
